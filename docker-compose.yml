@@ -1,0 +1,70 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: currency
+      POSTGRES_PASSWORD: currency
+      POSTGRES_DB: currency
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U currency -d currency"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  web:
+    build: .
+    command: sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+    environment:
+      DJANGO_SECRET_KEY: dev-key-change-me
+      DJANGO_DEBUG: "true"
+      DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1,web
+      DATABASE_URL: postgresql://currency:currency@db:5432/currency
+      CELERY_BROKER_URL: redis://redis:6379/0
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  celery:
+    build: .
+    command: celery -A config worker -l info
+    environment:
+      DJANGO_SECRET_KEY: dev-key-change-me
+      DJANGO_DEBUG: "true"
+      DATABASE_URL: postgresql://currency:currency@db:5432/currency
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: django-db
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  beat:
+    build: .
+    command: celery -A config beat -l info
+    environment:
+      DJANGO_SECRET_KEY: dev-key-change-me
+      DJANGO_DEBUG: "true"
+      DATABASE_URL: postgresql://currency:currency@db:5432/currency
+      CELERY_BROKER_URL: redis://redis:6379/0
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+volumes:
+  pgdata:
