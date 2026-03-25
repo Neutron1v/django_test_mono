@@ -1,6 +1,6 @@
 # Курси валют до UAH
 
-Django 5 + DRF + Celery + Redis + PostgreSQL. Курси з [Monobank `/bank/currency`](https://api.monobank.ua/bank/currency). **Нові** запити з Monobank пишуться лише для валют зі списку відстеження з **`is_active=True`**. Уже збережена **історія не видаляється**, якщо валюту прибрали з треку — лише перестають додаватися нові точки. Оновлення кожні **5 хв** (**django-celery-beat**, задача `fetch-monobank-uah-rates` — міграція `0002`).
+Django 5 + DRF + Celery + Redis + PostgreSQL. Курси з [Monobank `/bank/currency`](https://api.monobank.ua/bank/currency). **Нові** запити з Monobank пишуться лише для валют зі списку відстеження з **`is_active=True`**. Уже збережена **історія не видаляється**, якщо валюту прибрали з треку — лише перестають додаватися нові точки. Оновлення кожні **5 хв**.
 
 **Адмінка (superuser):** **Django Celery Results** → Task results, **Django Celery Beat** → Periodic tasks.
 
@@ -23,6 +23,8 @@ OpenAPI: `/api/schema/`, Swagger: `/api/docs/swagger/`, ReDoc: `/api/docs/redoc/
 
 - **Адмінка** → відстежувані валюти → дія **«Завантажити CSV…»**.
 - **Команда:** `python manage.py export_rates_csv -o rates.csv` (є `--only-active`).
+
+Змініть DJANGO_SECRET_CODE в докері та енв (або тільки енв)!!!
 
 ## Локально
 
